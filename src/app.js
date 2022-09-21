@@ -1,7 +1,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
-import userRoutes from './routes/user.routes';
+import userRoutes from './routes/user.routes.js';
+import channelRoutes from './routes/channel.routes.js';
 
 const app = express();
 app.use(morgan('dev'));
@@ -12,4 +13,5 @@ app.get('/', (req, res) => {
 });
 
 app.use(userRoutes);
+app.use(channelRoutes);
 export default app;
