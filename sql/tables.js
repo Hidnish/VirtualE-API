@@ -12,6 +12,30 @@ const tables = [
     UNIQUE INDEX email (email),
     UNIQUE INDEX username (username)
   )`,
+
+  `DROP TABLE IF EXISTS channel`,
+
+  `CREATE TABLE channel (
+    id INT NOT NULL AUTO_INCREMENT,
+    authorId INT NOT NULL UNIQUE,
+    channelName VARCHAR(30) NOT NULL,
+    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+    UNIQUE INDEX channelName (channelName),
+    PRIMARY KEY (id)
+  )`,
+
+  `DROP TABLE IF EXISTS userChannel`,
+
+  `CREATE TABLE userChannel(
+    userId INT NOT NULL,
+    channelId INT NOT NULL,
+    PRIMARY KEY (userId, channelId),
+    FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (channelId) REFERENCES channel(id) ON DELETE CASCADE ON UPDATE CASCADE
+  )` 
 ];
 
 export default tables;
+
+
