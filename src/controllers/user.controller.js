@@ -1,11 +1,11 @@
-import { getConenction } from '../database';
+import { getConnection } from '../database.js';
 import Joi from 'joi';
 const dbTable = 'User';
 
 //example of a get request
 const getUsers = async (req, res) => {
   try {
-    const connection = await getConenction();
+    const connection = await getConnection();
     // all you need to do is to write the query on the next line
     // for the other controller functions just copy this one.
     const dbQuery = `SELECT * FROM ${dbTable}`;
@@ -19,7 +19,7 @@ const getUsers = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
-    const connection = await getConenction();
+    const connection = await getConnection();
     const dbQuery = `SELECT * FROM ${dbTable} WHERE id = ?`;
     const queryValues = [parseInt(req.params.userId)];
     const result = await connection.query(dbQuery, queryValues);
@@ -55,7 +55,7 @@ const addUser = async (req, res) => {
       return;
     }
 
-    const connection = await getConenction();
+    const connection = await getConnection();
 
     const { username, password, email } = value;
     const queryValues = [username, password, email];
@@ -85,7 +85,7 @@ const addUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    const connection = await getConenction();
+    const connection = await getConnection();
     const dbQuery = `DELETE FROM ${dbTable} WHERE id = ?`;
     const queryValues = [parseInt(req.params.userId)];
     const result = await connection.query(dbQuery, queryValues);
