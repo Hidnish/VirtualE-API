@@ -36,20 +36,24 @@ const getChannel = async (req, res) => {
 const addChannel = async (req, res) => {
 	try {
 		const schema = Joi.object({
-			authorId: Joi.number().integer().required(),
 			channelName: Joi.string().min(2).max(30).required(),
 		})
 
 		const { error, value } = schema.validate(req.body)
+		
 		if (error) {
 			res.status(400)
 			res.json({ error: error.details[0].message })
 			return
 		}
 
+		const { channelName } = value
+
 		const connection = await getConnection()
 
-		const { authorId, channelName } = value
+		// Extract req.user.id from jwt middleware
+		const authorId = req.user.id
+
 		const queryValues = [authorId, channelName]
 
 		const existingChannelName = await connection.query(
@@ -77,7 +81,7 @@ const addChannel = async (req, res) => {
 const editChannelName = async (req, res) => {
 	try {
 		const schema = Joi.object({
-			channelName: Joi.string().required()
+			channelName: Joi.string().min(2).max(30).required()
 		})
 
 		const { error, value } = schema.validate(req.body)
