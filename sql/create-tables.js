@@ -1,6 +1,6 @@
-import { getConenction } from '../src/database';
+import { getConnection } from '../src/database.js';
 import async from 'async';
-import tables from './tables';
+import tables from './tables.js';
 
 async function main() {
   await createTables();
@@ -8,7 +8,7 @@ async function main() {
 
 const createTables = async () => {
   try {
-    const connection = await getConenction();
+    const connection = await getConnection();
 
     async
       .forEachOfSeries(tables, function (table, index, callback) {
