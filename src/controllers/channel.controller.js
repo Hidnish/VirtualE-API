@@ -94,13 +94,16 @@ const editChannelName = async (req, res) => {
 
 		const connection = await getConnection()
 
+		// Extract req.user.id from jwt middleware
+		const authorId = req.user.id
+
 		const { channelName } = value
 
-		const dbQuery = `UPDATE ${dbTable} SET channelName = ? WHERE id = ?`
-		const queryValues = [channelName, parseInt(req.params.channelId)]
+		const dbQuery = `UPDATE ${dbTable} SET channelName = ? WHERE id = ? AND authorId = ?`
+		const queryValues = [channelName, parseInt(req.params.channelId), authorId]
 		const result = await connection.query(dbQuery, queryValues)
 		if (result.affectedRows == 0) {
-			res.json({ error: 'Channel does not exist!' }).status(204)
+			res.json({ error: 'Channel does not exist, or user is not authorized to change channel name' }).status(204)
 			return
 		} else {
 			res.json({ result: 'Record edited successfully!' }).status(200)
@@ -115,11 +118,16 @@ const editChannelName = async (req, res) => {
 const deleteChannel = async (req, res) => {
 	try {
 		const connection = await getConnection()
-		const dbQuery = `DELETE FROM ${dbTable} WHERE id = ?`
-		const queryValues = [parseInt(req.params.channelId)]
+
+		// Extract req.user.id from jwt middleware
+		const authorId = req.user.id
+
+		const dbQuery = `DELETE FROM ${dbTable} WHERE id = ? AND authorId = ?`
+		const queryValues = [parseInt(req.params.channelId), authorId]
 		const result = await connection.query(dbQuery, queryValues)
+		
 		if (result.affectedRows == 0) {
-			res.json({ error: 'Channel does not exist!' }).status(204)
+			res.json({ error: 'Channel does not exist, or user is not authorized to delete channel' }).status(204)
 			return
 		} else {
 			res.json({ result: 'Record deleted successfully!' }).status(200)
