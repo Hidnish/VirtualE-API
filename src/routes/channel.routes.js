@@ -6,7 +6,7 @@ const router = Router();
 router.get('/getChannels', getChannels);
 router.get('/getChannel/:channelId', getChannel);
 router.post('/addChannel', verifyTokenTest, addChannel); // Middleware added to verify user via jwt
-router.patch('/editChannelName/:channelId', editChannelName);
-router.delete('/deleteChannel/:channelId', deleteChannel);
+router.patch('/editChannelName/:channelId', verifyTokenTest, editChannelName);
+router.delete('/deleteChannel/:channelId', verifyTokenTest, deleteChannel);
 
 export default router;
