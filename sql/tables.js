@@ -5,7 +5,7 @@ const tables = [
     id INT NOT NULL AUTO_INCREMENT,
     username VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
-    password VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
     PRIMARY KEY (id),
@@ -34,9 +34,7 @@ const tables = [
     PRIMARY KEY (userId, channelId),
     FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (channelId) REFERENCES channel(id) ON DELETE CASCADE ON UPDATE CASCADE
-  )` 
+  )`,
 ];
 
 export default tables;
-
-

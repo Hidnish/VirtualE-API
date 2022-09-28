@@ -10,7 +10,8 @@ Module explenation:
 
 Express: Framework that allows us to create the server to handle requests.
 
-bcryptjs: encrypts data like passwords for better safety.
+bcrypt: encrypts data like passwords for better safety.
+note: `bcrypt` is faster than `bcryptjs`
 
 Cors: Handles comunication with other servers for us.
 
