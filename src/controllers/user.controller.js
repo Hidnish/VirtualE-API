@@ -52,6 +52,11 @@ const register = async (req, res) => {
         })
         .required(),
       password: Joi.string().min(3).max(30).required(),
+      password_confirmation: Joi.any()
+        .equal(Joi.ref('password'))
+        .required()
+        .label('Confirm password')
+        .messages({ 'any.only': '{{#label}} does not match' }),
     });
 
     const { error, value } = schema.validate(req.body);
@@ -65,13 +70,13 @@ const register = async (req, res) => {
 
     let { username, password, email } = value;
 
-    const existingEmail = await connection.query(
-      `SELECT * FROM ${dbTable} WHERE email = ?`,
-      email
+    const existingUser = await connection.query(
+      `SELECT * FROM ${dbTable} WHERE email = ? OR username = ?`,
+      [email, username]
     );
 
-    if (existingEmail[0]) {
-      res.json({ error: 'email already exists' }).status(409);
+    if (existingUser[0]) {
+      res.json({ error: 'User already exists' }).status(409);
       return;
     }
 
