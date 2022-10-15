@@ -1,4 +1,6 @@
 const tables = [
+  `DROP TABLE IF EXISTS userChannel`,
+  `DROP TABLE IF EXISTS channel`,
   `DROP TABLE IF EXISTS user`,
 
   `CREATE TABLE user (
@@ -13,8 +15,6 @@ const tables = [
     UNIQUE INDEX username (username)
   )`,
 
-  `DROP TABLE IF EXISTS channel`,
-
   `CREATE TABLE channel (
     id INT NOT NULL AUTO_INCREMENT,
     authorId INT NOT NULL,
@@ -23,17 +23,15 @@ const tables = [
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
     UNIQUE INDEX channelName (channelName),
     PRIMARY KEY (id),
-    FOREIGN KEY (authorId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT fk_author FOREIGN KEY (authorId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE
   )`,
 
-  `DROP TABLE IF EXISTS userChannel`,
-
-  `CREATE TABLE userChannel(
+  `CREATE TABLE userchannel(
     userId INT NOT NULL,
     channelId INT NOT NULL,
     PRIMARY KEY (userId, channelId),
-    FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (channelId) REFERENCES channel(id) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT fk_user FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_channel FOREIGN KEY (channelId) REFERENCES channel(id) ON DELETE CASCADE ON UPDATE CASCADE
   )`,
 ];
 

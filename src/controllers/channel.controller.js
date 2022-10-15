@@ -40,7 +40,6 @@ const addChannel = async (req, res) => {
     const schema = Joi.object({
       channelName: Joi.string().min(2).max(30).required(),
     });
-
     const { error, value } = schema.validate(req.body);
 
     if (error) {
@@ -50,13 +49,10 @@ const addChannel = async (req, res) => {
     }
 
     const { channelName } = value;
-
     const connection = await getConnection();
 
-    // Extract req.user.id from jwt middleware
     const authorId = req.user.id;
-
-    const queryValues = [authorId, channelName];
+    const queryValues = [authorId, channelName, authorId];
 
     const existingChannelName = await connection.query(
       `SELECT * FROM ${dbTable} WHERE channelName = ?`,
@@ -72,7 +68,8 @@ const addChannel = async (req, res) => {
       return;
     }
 
-    const dbQuery = `INSERT INTO ${dbTable} (authorId, channelName) VALUES(?, ?) RETURNING *`;
+    const dbQuery = `INSERT INTO ${dbTable} (authorId, channelName) VALUES(?, ?) RETURNING *;
+    INSERT INTO userchannel (userId, channelId) VALUES(?, LAST_INSERT_ID()) RETURNING *`;
 
     const result = await connection.query(dbQuery, queryValues);
     res.json(result).status(200);
@@ -97,8 +94,6 @@ const editChannelName = async (req, res) => {
     }
 
     const connection = await getConnection();
-
-    // Extract req.user.id from jwt middleware
     const authorId = req.user.id;
 
     const { channelName } = value;
@@ -126,12 +121,12 @@ const editChannelName = async (req, res) => {
 const deleteChannel = async (req, res) => {
   try {
     const connection = await getConnection();
-
-    // Extract req.user.id from jwt middleware
     const authorId = req.user.id;
+    const channelId = parseInt(req.params.channelId);
 
-    const dbQuery = `DELETE FROM ${dbTable} WHERE id = ? AND authorId = ?`;
-    const queryValues = [parseInt(req.params.channelId), authorId];
+    const dbQuery = `
+    DELETE FROM ${dbTable} WHERE id = ? AND authorId = ?`;
+    const queryValues = [channelId, authorId];
     const result = await connection.query(dbQuery, queryValues);
 
     if (result.affectedRows == 0) {
@@ -151,4 +146,114 @@ const deleteChannel = async (req, res) => {
   }
 };
 
-export { getChannel, getChannels, addChannel, editChannelName, deleteChannel };
+const subscribeChannel = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const channelId = parseInt(req.params.channelId);
+    const connection = await getConnection();
+    const queryValues = [userId, channelId];
+
+    const existingChannel = await connection.query(
+      `SELECT * FROM ${dbTable} WHERE id = ?`,
+      channelId
+    );
+
+    if (!existingChannel[0]) {
+      res.json({ error: 'Channel does not exist' }).status(204);
+      return;
+    }
+
+    const subscribedUser = await connection.query(
+      `SELECT * FROM userchannel
+      WHERE userId = ? AND channelId = ?`,
+      queryValues
+    );
+
+    if (subscribedUser[0]) {
+      res
+        .json({ error: 'User is already subscribed to the channel' })
+        .status(409);
+      return;
+    }
+
+    const dbQuery = `INSERT INTO userchannel (userId, channelId) VALUES(?, ?) RETURNING *`;
+    const result = await connection.query(dbQuery, queryValues);
+    res.json({ result: result }).status(200);
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
+
+const unSubscribeChannel = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const channelId = parseInt(req.params.channelId);
+    const connection = await getConnection();
+    const queryValues = [userId, channelId];
+
+    const existingChannel = await connection.query(
+      `SELECT * FROM ${dbTable} WHERE id = ?`,
+      channelId
+    );
+
+    if (!existingChannel[0]) {
+      res.json({ error: 'Channel does not exist' }).status(204);
+      return;
+    }
+
+    const subscribedUser = await connection.query(
+      `SELECT * FROM userchannel
+      WHERE userId = ? AND channelId = ?`,
+      queryValues
+    );
+
+    if (!subscribedUser[0]) {
+      res.json({ error: 'User is NOT subscribed to the channel' }).status(204);
+      return;
+    }
+
+    const dbQuery = `DELETE FROM userchannel WHERE userId = ? AND channelId = ? RETURNING *`;
+    const result = await connection.query(dbQuery, queryValues);
+    res.json({ result: result }).status(200);
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
+
+const getUserChannels = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const connection = await getConnection();
+    const dbQuery = `
+    SELECT channel.id, channelName, username,  channel.authorId FROM channel
+    INNER JOIN userchannel INNER JOIN user
+    ON channel.id = userchannel.channelId AND user.id = userchannel.userId
+    WHERE user.id = ?`;
+
+    const result = await connection.query(dbQuery, userId);
+    if (!result[0]) {
+      res
+        .json({
+          error: 'User is not a participant in any channel',
+        })
+        .status(204);
+      return;
+    }
+    res.json({ result: result }).status(200);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+export {
+  getChannel,
+  getChannels,
+  addChannel,
+  editChannelName,
+  deleteChannel,
+  subscribeChannel,
+  unSubscribeChannel,
+  getUserChannels,
+};
