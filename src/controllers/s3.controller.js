@@ -1,7 +1,10 @@
 import dotenv from 'dotenv'
+import util from 'util'
 import fs from 'fs'
 import AWS from 'aws-sdk'
+
 dotenv.config()
+const unlinkFile = util.promisify(fs.unlink)
 
 AWS.config.update({
   accessKeyId: process.env.S3_ACCESS_KEY,
@@ -11,31 +14,26 @@ AWS.config.update({
 
 const s3 = new AWS.S3()
 
-const uploadFile = (req, res) => {
+const uploadFile = async (req, res) => {
   const source = req.file.path
   const targetName = req.file.filename
-  console.log('preparing to upload...')
-  fs.readFileSync(source, function (err, filedata) {
-    if (!err) {
-      const putParams = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: targetName,
-        Body: filedata,
-      }
-      s3.putObject(putParams, function (err, data) {
-        if (err) {
-          console.log('Could nor upload the file. Error :', err)
-          return res.send({ success: false })
-        } else {
-          fs.unlink(source) // Deleting the file from uploads folder(Optional).Do Whatever you prefer.
-          console.log('Successfully uploaded the file')
-          return res.send({ success: true })
-        }
-      })
-    } else {
-      console.log({ err: err })
+
+  try {
+    const myStream = fs.createReadStream(source)
+    const uploadParams = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: targetName,
+      Body: myStream,
     }
-  })
+    //  Why I replaced putObject with upload
+    //  https://stackoverflow.com/questions/38442512/difference-between-upload-and-putobject-for-uploading-a-file-to-s3
+    const result = await s3.upload(uploadParams).promise()
+    await unlinkFile(source)
+
+    return res.send({ fileKey: result.Key })
+  } catch (err) {
+    return res.send({ success: false, err: err })
+  }
 }
 
 const retrieveFile = (req, res) => {
@@ -45,15 +43,12 @@ const retrieveFile = (req, res) => {
     Key: filename,
   }
 
-  s3.getObject(getParams, function (err, data) {
-    if (err) {
-      return res.status(400).send({ success: false, err: err })
-    } else {
-      var buf = Buffer.from(data.Body)
-      fs.writeFileSync('downloads/image.jpg', buf)
-      return res.send(data.Body)
-    }
-  })
+  try {
+    const readStream = s3.getObject(getParams).createReadStream()
+    readStream.pipe(res)
+  } catch (err) {
+    return res.status(400).send({ success: false, err: err })
+  }
 }
 
 export { retrieveFile, uploadFile }
