@@ -19,7 +19,6 @@ const verifyTokenTest = async (req, res, next) => {
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
     if (err) return res.status(401).json({ message: 'Token not authorized' });
     req.user = user;
-    console.log(user);
     next();
   });
 };
